@@ -1,9 +1,9 @@
 # plugin-mail-template
 
 ## 功能预览
-![Snipaste_2025-04-10_01-36-40.webp](https://api.minio.yyds.pink/halo-docs/2025/04/Snipaste_2025-04-10_01-36-40.webp)
+![Snipaste_2025-04-11_17-39-45.webp](https://api.minio.yyds.pink/halo-docs/2025/04/Snipaste_2025-04-11_17-39-45.webp)
 
-![Snipaste_2025-04-10_01-36-49.webp](https://api.minio.yyds.pink/halo-docs/2025/04/Snipaste_2025-04-10_01-36-49.webp)
+![Snipaste_2025-04-11_17-39-58.webp](https://api.minio.yyds.pink/halo-docs/2025/04/Snipaste_2025-04-11_17-39-58.webp)
 
 ![Snipaste_2025-04-10_01-37-00.webp](https://api.minio.yyds.pink/halo-docs/2025/04/Snipaste_2025-04-10_01-37-00.webp)
 

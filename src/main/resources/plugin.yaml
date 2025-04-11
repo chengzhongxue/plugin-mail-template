@@ -2,6 +2,8 @@ apiVersion: plugin.halo.run/v1alpha1
 kind: Plugin
 metadata:
   name: plugin-mail-template
+  annotations:
+    "store.halo.run/app-id": "app-rnPqE"
 spec:
   enabled: false
   requires: ">=2.20.0"
@@ -9,10 +11,10 @@ spec:
     name: 困困鱼
     website: https://github.com/chengzhongxue
   logo: logo.svg
-  homepage: https://github.com/chengzhongxue/plugin-mail-template#readme
+  homepage: https://www.halo.run/store/apps/app-rnPqE
   repo: https://github.com/chengzhongxue/plugin-mail-template
   issues: https://github.com/chengzhongxue/plugin-mail-template/issues
-  displayName: "管理邮件模板"
+  displayName: "邮件模板管理"
   description: "查看、编辑 邮件模板"
   license:
     - name: "GPL-3.0"
