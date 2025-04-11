@@ -16,6 +16,7 @@ import run.halo.app.extension.router.selector.FieldSelector;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.data.domain.Sort.Order.asc;
 import static run.halo.app.extension.index.query.QueryFactory.and;
@@ -62,17 +63,40 @@ public class NotificationTemplateReconciler implements Reconciler<Reconciler.Req
                                     NotificationTemplate oldNotificationTemplate = notificationTemplates.get(0);
                                     boolean isAfter = oldNotificationTemplate.getMetadata().getCreationTimestamp().isAfter(creationTimestamp);
                                     if (isAfter) {
-                                        NotificationTemplate newNotificationTemplateOne = new NotificationTemplate();
-                                        BeanUtils.copyProperties(oldNotificationTemplate, newNotificationTemplateOne);
-                                        newNotificationTemplateOne.getMetadata().setName(name);
-                                        newNotificationTemplateOne.getSpec().getTemplate().setHtmlBody(spec.getTemplate().getHtmlBody());
+                                        // 确保旧模板已被删除后再创建新模板
                                         try {
-                                            // 延迟 2 秒
-                                            Thread.sleep(2000);
+                                            // 检查模板是否已被删除
+                                            boolean templateDeleted = false;
+                                            int maxRetries = 5;
+                                            int retryCount = 0;
+                                            
+                                            while (!templateDeleted && retryCount < maxRetries) {
+                                                // 延迟检查，等待删除操作完成
+                                                Thread.sleep(500);
+                                                
+                                                // 尝试获取模板，如果获取不到则表示已删除
+                                                Optional<NotificationTemplate> checkTemplate = 
+                                                    client.fetch(NotificationTemplate.class, name);
+                                                
+                                                if (checkTemplate.isEmpty()) {
+                                                    templateDeleted = true;
+                                                } else {
+                                                    retryCount++;
+                                                }
+                                            }
+                                            
+                                            if (templateDeleted) {
+                                                // 创建新模板
+                                                NotificationTemplate newNotificationTemplateOne = new NotificationTemplate();
+                                                BeanUtils.copyProperties(oldNotificationTemplate, newNotificationTemplateOne);
+                                                newNotificationTemplateOne.getMetadata().setName(name);
+                                                newNotificationTemplateOne.getSpec().getTemplate().setHtmlBody(spec.getTemplate().getHtmlBody());
+                                                
+                                                client.create(newNotificationTemplateOne);
+                                            }
                                         } catch (InterruptedException e) {
                                             e.printStackTrace();
                                         }
-                                        client.create(newNotificationTemplateOne);
                                         return;
                                     }
                                 }

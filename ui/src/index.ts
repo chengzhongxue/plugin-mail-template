@@ -14,11 +14,11 @@ export default definePlugin({
         component: MailTemplates,
         meta: {
           title: "邮件模板管理",
+          description: '查看、编辑 邮件模板',
           searchable: true,
           permissions: ["*"],
           menu: {
             name: "邮件模板管理",
-            description: '查看、编辑 邮件模板',
             icon: markRaw(FluentMailTemplate24Regular),
             priority: 0,
           },

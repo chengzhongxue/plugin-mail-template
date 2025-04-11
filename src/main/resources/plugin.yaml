@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: plugin-mail-template
 spec:
-  enabled: true
+  enabled: false
   requires: ">=2.20.0"
   author:
     name: 困困鱼

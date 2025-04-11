@@ -12,6 +12,9 @@ import {Codemirror} from "vue-codemirror";
 import type { LanguageSupport } from '@codemirror/language';
 import { html } from '@codemirror/lang-html';
 import TemplatePropertiesDetailModal from "@/views/TemplatePropertiesDetailModal.vue";
+import { useEventListener,useLocalStorage } from "@vueuse/core";
+import RiMenuUnfoldLine from '~icons/ri/menu-unfold-line?width=1.2em&height=1.2em';
+import RiMenuFoldLine from '~icons/ri/menu-fold-line?width=1.2em&height=1.2em';
 
 const props = withDefaults(
   defineProps<{ reasonType?: ReasonType }>(),
@@ -21,6 +24,7 @@ const props = withDefaults(
 );
 
 const queryClient = useQueryClient();
+const showSidebar = useLocalStorage("plugin-mail-template:show-sidebar", true)
 
 const Q_KEY = (name?: Ref<string | undefined>) => [
   "notification-template-value",
@@ -158,11 +162,44 @@ const { mutate:save, isLoading:saveIsLoading } = useMutation({
   }
 });
 
-
+useEventListener("keydown", (e: KeyboardEvent) => {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === "s") {
+      e.preventDefault();
+      save()
+    }
+  }
+})
 
 </script>
 
 <template>
+  <div
+    class="sticky top-0 z-10 flex h-12 items-center justify-between space-x-3 border-b bg-white px-4"
+  >
+    <VSpace>
+      <div :class="['inline-flex cursor-pointer items-center justify-center rounded p-1.5 transition-all hover:bg-gray-100',{'bg-gray-100': !showSidebar}]"
+           @click="showSidebar = !showSidebar"
+      >
+        <RiMenuUnfoldLine v-if="showSidebar" />
+        <RiMenuFoldLine v-else />
+      </div>
+      <h2 class="font-semibold text-gray-900">
+        {{ reasonType?.spec?.displayName }}
+      </h2>
+    </VSpace>
+    <VSpace>
+      <VButton
+        type="secondary"
+        :loading="saveIsLoading"
+        :cronIsLoading="isLoading"
+        size="sm"
+        @click="save"
+      >
+        保存
+      </VButton>
+    </VSpace>
+  </div>
   <TemplatePropertiesDetailModal
     v-if="propertiesDetailModal && reasonType"
     :reason-type="reasonType"
@@ -197,16 +234,8 @@ const { mutate:save, isLoading:saveIsLoading } = useMutation({
             >
               {{ preview ? "编辑" : "预览" }}
             </VButton>
-            <VButton
-              :loading="saveIsLoading"
-              :cronIsLoading="isLoading"
-              size="sm"
-              @click="save"
-            >
-              保存
-            </VButton>
           </VSpace>
-          
+
         </div>
         <div class="h-full" v-show="!preview">
           <codemirror
@@ -225,7 +254,7 @@ const { mutate:save, isLoading:saveIsLoading } = useMutation({
           <VLoading v-if="isLoading" />
           <div v-else
                ref="previewRef"
-               class="preview line-numbers" 
+               class="preview line-numbers"
                v-html="htmlBody">
           </div>
         </div>
