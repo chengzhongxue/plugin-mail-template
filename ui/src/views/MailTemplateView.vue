@@ -181,8 +181,8 @@ useEventListener("keydown", (e: KeyboardEvent) => {
       <div :class="['inline-flex cursor-pointer items-center justify-center rounded p-1.5 transition-all hover:bg-gray-100',{'bg-gray-100': !showSidebar}]"
            @click="showSidebar = !showSidebar"
       >
-        <RiMenuUnfoldLine v-if="showSidebar" />
-        <RiMenuFoldLine v-else />
+        <RiMenuFoldLine v-if="showSidebar" />
+        <RiMenuUnfoldLine v-else />
       </div>
       <h2 class="font-semibold text-gray-900">
         {{ reasonType?.spec?.displayName }}
