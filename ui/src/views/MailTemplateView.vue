@@ -151,11 +151,10 @@ const { mutate:save, isLoading:saveIsLoading } = useMutation({
         notificationTemplate: formState.value
       });
     }
-    
   },
   onSuccess(data) {
     queryClient.invalidateQueries({
-      queryKey: Q_KEY(notificationTemplateOneName),
+      queryKey: Q_KEY(reasonTypeName),
     });
     formState.value = data.data
     Toast.success("保存成功");
