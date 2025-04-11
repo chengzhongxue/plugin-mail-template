@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import {
-  coreApiClient, 
+  axiosInstance,
+  coreApiClient,
   type NotificationTemplate,
   type ReasonType,
 } from "@halo-dev/api-client";
-import { Toast, VEmpty, VLoading, VButton, VSpace } from "@halo-dev/components";
+import {Toast, VEmpty, VLoading, VButton, VSpace, Dialog} from "@halo-dev/components";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/vue-query";
 import {computed, ref, toRefs, type Ref} from "vue";
 import { EditorView } from "@codemirror/view";
@@ -32,6 +33,7 @@ const Q_KEY = (name?: Ref<string | undefined>) => [
 ];
 
 const isUpdate = ref(false);
+const restoreIsLoading = ref(false)
 const propertiesDetailModal = ref(false);
 
 const { reasonType } = toRefs(props);
@@ -76,7 +78,7 @@ const { data: value , isLoading} = useQuery({
   queryKey: Q_KEY(reasonTypeName),
   queryFn: async () => {
     if (!reasonType.value) return null;
-
+    restoreIsLoading.value = true;
     const { data } = await coreApiClient.notification.notificationTemplate.listNotificationTemplate(
       {
         fieldSelector: [
@@ -94,6 +96,13 @@ const { data: value , isLoading} = useQuery({
       isUpdate.value = false;
       return data?.items[0];
     }
+  },
+  refetchInterval: (data) => {
+    const deletionTimestamp = data?.metadata.deletionTimestamp
+    if (!deletionTimestamp) {
+      restoreIsLoading.value = false
+    }
+    return deletionTimestamp ? 1000 : false;
   },
   onSuccess(data) {
     htmlBody.value =  data?.spec?.template?.htmlBody || ""
@@ -156,10 +165,45 @@ const { mutate:save, isLoading:saveIsLoading } = useMutation({
     queryClient.invalidateQueries({
       queryKey: Q_KEY(reasonTypeName),
     });
-    formState.value = data.data
     Toast.success("保存成功");
   }
 });
+
+const { mutate:verifySend, isLoading:verifySendIsLoading } = useMutation({
+  mutationKey: ["template-verify-send"],
+  mutationFn: async () => {
+    if (isUpdate.value) {
+      return await axiosInstance.post(`/apis/api.mail.template.kunkunyu.com/v1alpha1/mailtemplates/${reasonTypeName.value}/verify-send`);
+    }
+  },
+  onSuccess(data) {
+    Toast.success("验证成功");
+  }
+});
+
+const restoreTemplate = async () => {
+  Dialog.warning({
+    title: "确定要恢复模板吗？",
+    description: "恢复将现在设置的模板删掉，将无法恢复。",
+    confirmType: "danger",
+    confirmText: "确定",
+    cancelText: "取消",
+    onConfirm: async () => {
+      try {
+        await coreApiClient.notification.notificationTemplate.deleteNotificationTemplate({
+          name: notificationTemplateOneName.value,
+        });
+        Toast.success("还原模版成功");
+      } catch (error) {
+        console.error("Reduction template",error);
+      } finally {
+        queryClient.invalidateQueries({
+          queryKey: Q_KEY(reasonTypeName),
+        });
+      }
+    },
+  });
+};
 
 useEventListener("keydown", (e: KeyboardEvent) => {
   if (e.ctrlKey || e.metaKey) {
@@ -188,6 +232,23 @@ useEventListener("keydown", (e: KeyboardEvent) => {
       </h2>
     </VSpace>
     <VSpace>
+      <VButton
+        type="primary"
+        :loading="verifySendIsLoading || restoreIsLoading"
+        :disabled="!isUpdate"
+        size="sm"
+        @click="verifySend"
+      >
+        验证模板
+      </VButton>
+      <VButton
+        :loading="restoreIsLoading"
+        :disabled="!isUpdate"
+        size="sm"
+        @click="restoreTemplate"
+      >
+        还原模板
+      </VButton>
       <VButton
         type="secondary"
         :loading="saveIsLoading"
