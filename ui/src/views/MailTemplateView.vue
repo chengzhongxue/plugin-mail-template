@@ -175,7 +175,7 @@ useEventListener("keydown", (e: KeyboardEvent) => {
 
 <template>
   <div
-    class="sticky top-0 z-10 flex h-12 items-center justify-between space-x-3 border-b bg-white px-4"
+    class="sticky top-0 z-10 flex h-12 items-center justify-between space-x-3 border-b bg-white px-2"
   >
     <VSpace>
       <div :class="['inline-flex cursor-pointer items-center justify-center rounded p-1.5 transition-all hover:bg-gray-100',{'bg-gray-100': !showSidebar}]"
