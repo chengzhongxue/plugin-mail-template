@@ -70,8 +70,10 @@ public class NotificationTemplateReconciler implements Reconciler<Reconciler.Req
                                                 // 创建新模板
                                                 NotificationTemplate newNotificationTemplateOne = new NotificationTemplate();
                                                 BeanUtils.copyProperties(notificationTemplate, newNotificationTemplateOne);
+                                                NotificationTemplate.Template template = notificationTemplateOne.getSpec().getTemplate();
                                                 newNotificationTemplateOne.getMetadata().setName(templateName);
-                                                newNotificationTemplateOne.getSpec().getTemplate().setHtmlBody(notificationTemplateOne.getSpec().getTemplate().getHtmlBody());
+                                                newNotificationTemplateOne.getSpec().getTemplate().setHtmlBody(template.getHtmlBody());
+                                                newNotificationTemplateOne.getSpec().getTemplate().setTitle(template.getTitle());
 
                                                 client.create(newNotificationTemplateOne);
                                             }
