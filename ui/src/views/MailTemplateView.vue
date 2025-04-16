@@ -72,7 +72,10 @@ const formState = ref<NotificationTemplate>({
   }
 });
 
-const htmlBody =ref<string>("");
+const template = ref({
+  title:"",
+  htmlBody:""
+})
 
 const { data: value , isLoading} = useQuery({
   queryKey: Q_KEY(reasonTypeName),
@@ -105,7 +108,10 @@ const { data: value , isLoading} = useQuery({
     return deletionTimestamp ? 1000 : false;
   },
   onSuccess(data) {
-    htmlBody.value =  data?.spec?.template?.htmlBody || ""
+    template.value = {
+      title: data?.spec?.template?.title || "",
+      htmlBody: data?.spec?.template?.htmlBody || ""
+    }
     if (data) {
       formState.value = data
     }
@@ -119,6 +125,9 @@ const preview = ref(false);
 const { mutate:save, isLoading:saveIsLoading } = useMutation({
   mutationKey: ["template-save"],
   mutationFn: async () => {
+    if (template.value.title == null || template.value.title == '') {
+      template.value.title = formState.value.spec?.template?.title || ""
+    }
     if (isUpdate.value) {
       const { data: data } = await coreApiClient.notification.notificationTemplate.getNotificationTemplate({
         name: notificationTemplateOneName.value
@@ -128,10 +137,8 @@ const { mutate:save, isLoading:saveIsLoading } = useMutation({
         spec: {
           reasonSelector: data.spec?.reasonSelector,
           template: {
-            title: data.spec?.template?.title || "",
+            ...template.value,
             rawBody: data.spec?.template?.rawBody,
-            htmlBody: htmlBody.value,
-            
           }
         }
       };
@@ -146,9 +153,8 @@ const { mutate:save, isLoading:saveIsLoading } = useMutation({
         spec: {
           reasonSelector: formState.value.spec?.reasonSelector,
           template: {
-            title: formState.value.spec?.template?.title || "",
+            ...template.value,
             rawBody: formState.value.spec?.template?.rawBody,
-            htmlBody: htmlBody.value,
           }
         },
         metadata: {
@@ -279,7 +285,9 @@ useEventListener("keydown", (e: KeyboardEvent) => {
     <Transition v-else name="fade" appear>
       <div class="h-full">
         <div class="flex h-10 items-center justify-between border-b px-2">
-          <div class="flex gap-1 rounded"></div>
+          <div class="flex gap-1 rounded">
+            <input placeholder="输入 模板标题" v-model="template.title" class="w-64 px-0 text-sm">
+          </div>
           <VSpace>
             <VButton
               v-if="reasonType"
@@ -299,7 +307,7 @@ useEventListener("keydown", (e: KeyboardEvent) => {
         </div>
         <div class="h-full" v-show="!preview">
           <codemirror
-            v-model="htmlBody"
+            v-model="template.htmlBody"
             :style="{ height: '100%'}"
             :autofocus="true"
             :indent-with-tab="true"
@@ -315,7 +323,7 @@ useEventListener("keydown", (e: KeyboardEvent) => {
           <div v-else
                ref="previewRef"
                class="preview line-numbers"
-               v-html="htmlBody">
+               v-html="template.htmlBody">
           </div>
         </div>
       </div>
