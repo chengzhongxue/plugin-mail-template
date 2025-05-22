@@ -13,7 +13,9 @@
 - 安装完成后，在 Halo 后台管理界面左侧菜单栏中找到`工具`选项
 - 点击`邮件模板管理` 选择对应的模版
 
+## 交流群
+* 添加企业微信 （备注进群）
+<img width="360" src="https://api.minio.yyds.pink/kunkunyu/files/2025/02/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20250212142105-pbceif.jpg" />
 
-
-
-
+* QQ群
+<img width="360" src="https://api.minio.yyds.pink/kunkunyu/files/2025/05/qq-708998089-iqowsh.webp" />
