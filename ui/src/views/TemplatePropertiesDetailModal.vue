@@ -70,55 +70,55 @@ const systemAttributes = ref([
     :centered="false"
     @close="emit('close')">
     <!-- 系统变量 -->
-    <div class="px-4 pt-4">
-      <div class="mb-2 font-medium text-base flex items-center">
-        <div class="w-1 h-4 bg-primary rounded mr-2"></div>
+    <div class=":uno: px-4 pt-4">
+      <div class=":uno: mb-2 font-medium text-base flex items-center">
+        <div class=":uno: w-1 h-4 bg-primary rounded mr-2"></div>
         系统变量
       </div>
-      <div class="border rounded overflow-hidden">
+      <div class=":uno: border rounded overflow-hidden">
         <!-- Table Header -->
-        <div class="grid grid-cols-3 bg-gray-50 border-b">
-          <div class="p-2 font-medium">字段名</div>
-          <div class="p-2 font-medium">类型</div>
-          <div class="p-2 font-medium">说明</div>
+        <div class=":uno: mail-template-grid grid-cols-3 bg-gray-50 border-b">
+          <div class=":uno: p-2 font-medium">字段名</div>
+          <div class=":uno: p-2 font-medium">类型</div>
+          <div class=":uno: p-2 font-medium">说明</div>
         </div>
         <!-- Table Body -->
         <div v-for="systemAttribute in systemAttributes" :key="systemAttribute.name">
-          <div class="grid grid-cols-3 border-b last:border-b-0 hover:bg-gray-50">
-            <div class="p-3">
-              <code class="bg-gray-100 px-2 py-1 rounded text-sm">{{ systemAttribute.name }}</code>
+          <div class=":uno: mail-template-grid grid-cols-3 border-b last:border-b-0 hover:bg-gray-50">
+            <div class=":uno: p-3">
+              <code class=":uno: bg-gray-100 px-2 py-1 rounded text-sm">{{ systemAttribute.name }}</code>
             </div>
-            <div class="p-3">
-              <code class="bg-gray-100 px-2 py-1 rounded text-sm">{{ systemAttribute.type }}</code>
+            <div class=":uno: p-3">
+              <code class=":uno: bg-gray-100 px-2 py-1 rounded text-sm">{{ systemAttribute.type }}</code>
             </div>
-            <div class="p-3">{{ systemAttribute.description }}</div>
+            <div class=":uno: p-3">{{ systemAttribute.description }}</div>
           </div>
         </div>
       </div>
     </div>
     <!-- 模版变量 -->
-    <div class="p-4">
-      <div class="mb-2 font-medium text-base flex items-center">
-        <div class="w-1 h-4 bg-primary rounded mr-2"></div>
+    <div class=":uno: p-4">
+      <div class=":uno: mb-2 font-medium text-base flex items-center">
+        <div class=":uno: w-1 h-4 bg-primary rounded mr-2"></div>
         模版变量
       </div>
-      <div class="border rounded overflow-hidden">
+      <div class=":uno: border rounded overflow-hidden">
         <!-- Table Header -->
-        <div class="grid grid-cols-3 bg-gray-50 border-b">
-          <div class="p-2 font-medium">字段名</div>
-          <div class="p-2 font-medium">类型</div>
-          <div class="p-2 font-medium">说明</div>
+        <div class=":uno: mail-template-grid grid-cols-3 bg-gray-50 border-b">
+          <div class=":uno: p-2 font-medium">字段名</div>
+          <div class=":uno: p-2 font-medium">类型</div>
+          <div class=":uno: p-2 font-medium">说明</div>
         </div>
         <!-- Table Body -->
         <div v-for="property in reasonType.spec?.properties" :key="property.name">
-          <div class="grid grid-cols-3 border-b last:border-b-0 hover:bg-gray-50">
-            <div class="p-3">
-              <code class="bg-gray-100 px-2 py-1 rounded text-sm">{{ property.name }}</code>
+          <div class=":uno: mail-template-grid grid-cols-3 border-b last:border-b-0 hover:bg-gray-50">
+            <div class=":uno: p-3">
+              <code class=":uno: bg-gray-100 px-2 py-1 rounded text-sm">{{ property.name }}</code>
             </div>
-            <div class="p-3">
-              <code class="bg-gray-100 px-2 py-1 rounded text-sm">{{ property.type }}</code>
+            <div class=":uno: p-3">
+              <code class=":uno: bg-gray-100 px-2 py-1 rounded text-sm">{{ property.type }}</code>
             </div>
-            <div class="p-3">{{ property.description }}</div>
+            <div class=":uno: p-3">{{ property.description }}</div>
           </div>
         </div>
       </div>
@@ -132,10 +132,3 @@ const systemAttributes = ref([
     </template>
   </VModal>
 </template>
-
-<style scoped>
-.grid {
-  display: grid;
-  grid-template-columns: 250px 120px 1fr;
-}
-</style>

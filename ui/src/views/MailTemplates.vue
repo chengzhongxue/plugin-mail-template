@@ -53,10 +53,10 @@ watch(
 </script>
 
 <template>
-  <div :class="{'fixed inset-0 z-[999] bg-white' : fullscreen}">
-    <VPageHeader title="模版管理" :class="{'shadow transition-all' : fullscreen}">
+  <div :class="{':uno: fixed inset-0 z-999 bg-white' : fullscreen}">
+    <VPageHeader title="模版管理" :class="{':uno: shadow transition-all' : fullscreen}">
       <template #icon>
-        <FluentMailTemplate24Regular class="mr-2 self-center" />
+        <FluentMailTemplate24Regular class=":uno: mr-2 self-center" />
       </template>
       <template #actions>
         <VButton size="sm" @click="fullscreen = !fullscreen">
@@ -65,28 +65,28 @@ watch(
       </template>
     </VPageHeader>
 
-    <div class="m-0 md:m-4">
+    <div class=":uno: m-0 md:m-4">
       <VCard
         style="height: calc(100vh - 5.5rem)"
         :body-class="['h-full', '!p-0']"
       >
-        <div :class="['grid h-full grid-cols-12 divide-y sm:divide-x sm:divide-y-0',{'!divide-none' : !showSidebar}]">
-          <div class="relative col-span-12 h-full overflow-auto sm:col-span-4 md:col-span-5 lg:col-span-4 xl:col-span-3" :style="`${!showSidebar ? 'display:none' : ''}`">
+        <div :class="[':uno: grid h-full grid-cols-12 divide-y sm:divide-x sm:divide-y-0',{'!divide-none' : !showSidebar}]">
+          <div class=":uno: relative col-span-12 h-full overflow-auto sm:col-span-4 md:col-span-5 lg:col-span-4 xl:col-span-3" :style="`${!showSidebar ? 'display:none' : ''}`">
             <div
-              class="sticky top-0 z-10 flex h-12 items-center border-b bg-white px-4"
+              class=":uno: sticky top-0 z-10 flex h-12 items-center border-b bg-white px-4"
             >
-              <h2 class="font-semibold text-gray-900">
+              <h2 class=":uno: font-semibold text-gray-900">
                 模版
               </h2>
             </div>
             <ul
-              class="box-border w-full divide-y divide-gray-100 overflow-auto pb-12"
+              class=":uno: box-border w-full divide-y divide-gray-100 overflow-auto pb-12"
               role="list"
             >
               <li
                 v-for="reasonType in reasonTypes?.items"
                 :key="reasonType.metadata.name"
-                class="relative cursor-pointer"
+                class=":uno: relative cursor-pointer"
                 @click="
                 selectedReasonTypeName =
                   reasonType.metadata.name
@@ -97,24 +97,24 @@ watch(
                   selectedReasonTypeName ===
                   reasonType.metadata.name
                 "
-                  class="absolute inset-y-0 left-0 w-0.5 bg-primary"
+                  class=":uno: absolute inset-y-0 left-0 w-0.5 bg-primary"
                 ></div>
                 <div
-                  class="flex flex-col space-y-1.5 px-4 py-2.5 hover:bg-gray-50"
+                  class=":uno: flex flex-col space-y-1.5 px-4 py-2.5 hover:bg-gray-50"
                 >
                   <h3
-                    class="line-clamp-1 break-words text-sm font-medium text-gray-900"
+                    class=":uno: line-clamp-1 break-words text-sm font-medium text-gray-900"
                   >
                     {{ reasonType.spec?.displayName }}
                   </h3>
-                  <p class="line-clamp-2 text-xs text-gray-600">
+                  <p class=":uno: line-clamp-2 text-xs text-gray-600">
                     <!--                  {{ reasonType.spec?.description }}-->
                   </p>
                 </div>
               </li>
             </ul>
           </div>
-          <div :class="['col-span-12 sm:col-span-8 md:col-span-7 lg:col-span-8 xl:col-span-9',{'!col-span-12' : !showSidebar}]">
+          <div :class="[':uno: col-span-12 sm:col-span-8 md:col-span-7 lg:col-span-8 xl:col-span-9',{'!col-span-12' : !showSidebar}]">
             <MailTemplateView
               :reason-type="selectedReasonType"
             />

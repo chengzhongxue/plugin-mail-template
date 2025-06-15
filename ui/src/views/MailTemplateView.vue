@@ -224,16 +224,16 @@ useEventListener("keydown", (e: KeyboardEvent) => {
 
 <template>
   <div
-    class="sticky top-0 z-10 flex h-12 items-center justify-between space-x-3 border-b bg-white px-2"
+    class=":uno: sticky top-0 z-10 flex h-12 items-center justify-between space-x-3 border-b bg-white px-2"
   >
     <VSpace>
-      <div :class="['inline-flex cursor-pointer items-center justify-center rounded p-1.5 transition-all hover:bg-gray-100',{'bg-gray-100': !showSidebar}]"
+      <div :class="[':uno: inline-flex cursor-pointer items-center justify-center rounded p-1.5 transition-all hover:bg-gray-100',{'bg-gray-100': !showSidebar}]"
            @click="showSidebar = !showSidebar"
       >
         <RiMenuFoldLine v-if="showSidebar" />
         <RiMenuUnfoldLine v-else />
       </div>
-      <h2 class="font-semibold text-gray-900">
+      <h2 class=":uno: font-semibold text-gray-900">
         {{ reasonType?.spec?.displayName }}
       </h2>
     </VSpace>
@@ -271,7 +271,7 @@ useEventListener("keydown", (e: KeyboardEvent) => {
     :reason-type="reasonType"
     @close="propertiesDetailModal = false"
   />
-  <div class="h-full w-full" style="height: calc(-11rem + 100vh);">
+  <div class=":uno: h-full w-full" style="height: calc(-11rem + 100vh);">
     <VLoading v-if="isLoading"></VLoading>
     <Transition
       v-else-if="!value"
@@ -283,10 +283,10 @@ useEventListener("keydown", (e: KeyboardEvent) => {
       ></VEmpty>
     </Transition>
     <Transition v-else name="fade" appear>
-      <div class="h-full">
-        <div class="flex h-10 items-center justify-between border-b px-2">
-          <div class="flex gap-1 rounded">
-            <input placeholder="输入 模板标题" v-model="template.title" class="w-64 px-0 text-sm">
+      <div class=":uno: h-full">
+        <div class=":uno: flex h-10 items-center justify-between border-b px-2">
+          <div class=":uno: flex gap-1 rounded">
+            <input placeholder="输入 模板标题" v-model="template.title" class=":uno: w-64 px-0 text-sm">
           </div>
           <VSpace>
             <VButton
@@ -303,9 +303,8 @@ useEventListener("keydown", (e: KeyboardEvent) => {
               {{ preview ? "编辑" : "预览" }}
             </VButton>
           </VSpace>
-
         </div>
-        <div class="h-full" v-show="!preview">
+        <div class=":uno: h-full" v-show="!preview">
           <codemirror
             v-model="template.htmlBody"
             :style="{ height: '100%'}"
@@ -318,11 +317,11 @@ useEventListener("keydown", (e: KeyboardEvent) => {
             ]"
           />
         </div>
-        <div class="h-full" v-show="preview">
+        <div class=":uno: h-full" v-show="preview">
           <VLoading v-if="isLoading" />
           <div v-else
                ref="previewRef"
-               class="preview line-numbers"
+               class=":uno: preview line-numbers"
                v-html="template.htmlBody">
           </div>
         </div>
