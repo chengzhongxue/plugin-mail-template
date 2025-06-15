@@ -6,7 +6,7 @@ metadata:
     "store.halo.run/app-id": "app-rnPqE"
 spec:
   enabled: false
-  requires: ">=2.20.0"
+  requires: ">=2.21.0"
   author:
     name: 困困鱼
     website: https://github.com/chengzhongxue
