@@ -7,8 +7,9 @@
 
 ![Snipaste_2025-04-10_01-37-00.webp](https://api.minio.yyds.pink/halo-docs/2025/04/Snipaste_2025-04-10_01-37-00.webp)
 
-## 使用说明
+## 使用文档
 
+- 文档：https://docs.kunkunyu.com/docs/mail-template
 - 注意事项：不会改的请不要随意修改，否则会导致模版失效
 - 安装完成后，在 Halo 后台管理界面左侧菜单栏中找到`工具`选项
 - 点击`邮件模板管理` 选择对应的模版
