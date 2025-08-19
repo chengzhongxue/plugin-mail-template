@@ -73,6 +73,10 @@ const systemAttributes = ref([
     <div class=":uno: px-4 pt-4">
       <div class=":uno: mb-2 font-medium text-base flex items-center">
         <div class=":uno: w-1 h-4 bg-primary rounded mr-2"></div>
+        模板Id：{{ reasonType.metadata.name }}
+      </div>
+      <div class=":uno: mb-2 font-medium text-base flex items-center">
+        <div class=":uno: w-1 h-4 bg-primary rounded mr-2"></div>
         系统变量
       </div>
       <div class=":uno: border rounded overflow-hidden">

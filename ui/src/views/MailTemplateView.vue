@@ -12,10 +12,12 @@ import { EditorView } from "@codemirror/view";
 import {Codemirror} from "vue-codemirror";
 import type { LanguageSupport } from '@codemirror/language';
 import { html } from '@codemirror/lang-html';
-import TemplatePropertiesDetailModal from "@/views/TemplatePropertiesDetailModal.vue";
+import TemplatePropertiesDetailModal from "@/components/TemplatePropertiesDetailModal.vue";
 import { useEventListener,useLocalStorage } from "@vueuse/core";
 import RiMenuUnfoldLine from '~icons/ri/menu-unfold-line?width=1.2em&height=1.2em';
 import RiMenuFoldLine from '~icons/ri/menu-fold-line?width=1.2em&height=1.2em';
+import MailTemplateStoreModal from "@/components/MailTemplateStoreModal.vue";
+import type {ListedMailTemplate} from "@/types";
 
 const props = withDefaults(
   defineProps<{ reasonType?: ReasonType }>(),
@@ -35,6 +37,7 @@ const Q_KEY = (name?: Ref<string | undefined>) => [
 const isUpdate = ref(false);
 const restoreIsLoading = ref(false)
 const propertiesDetailModal = ref(false);
+const openMailTemplateStoreModal = ref(false);
 
 const { reasonType } = toRefs(props);
 
@@ -220,6 +223,17 @@ useEventListener("keydown", (e: KeyboardEvent) => {
   }
 })
 
+
+const handleTemplateSelect = (selectedTemplate: ListedMailTemplate) => {
+  
+  // 例如：将选中模板的内容应用到当前编辑器
+  if (selectedTemplate.mailTemplate.spec.htmlBody) {
+    template.value.htmlBody = selectedTemplate.mailTemplate.spec.htmlBody;
+  }
+  
+  // 关闭模态框
+  openMailTemplateStoreModal.value = false;
+};
 </script>
 
 <template>
@@ -271,6 +285,12 @@ useEventListener("keydown", (e: KeyboardEvent) => {
     :reason-type="reasonType"
     @close="propertiesDetailModal = false"
   />
+  <MailTemplateStoreModal
+    v-if="openMailTemplateStoreModal && reasonType"
+    :reason-type="reasonType"
+    @close="openMailTemplateStoreModal = false"
+    @select="handleTemplateSelect"
+  />
   <div class=":uno: h-full w-full" style="height: calc(-11rem + 100vh);">
     <VLoading v-if="isLoading"></VLoading>
     <Transition
@@ -289,6 +309,14 @@ useEventListener("keydown", (e: KeyboardEvent) => {
             <input placeholder="输入 模板标题" v-model="template.title" class=":uno: w-64 px-0 text-sm">
           </div>
           <VSpace>
+            <VButton
+              v-if="reasonType"
+              size="sm"
+              type="primary"
+              @click="openMailTemplateStoreModal = true"
+            >
+              模版市场
+            </VButton>
             <VButton
               v-if="reasonType"
               size="sm"
