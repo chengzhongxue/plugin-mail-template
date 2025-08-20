@@ -234,6 +234,13 @@ const handleTemplateSelect = (selectedTemplate: ListedMailTemplate) => {
   // 关闭模态框
   openMailTemplateStoreModal.value = false;
 };
+
+const getIframeContent = () => {
+  return `
+    <!DOCTYPE html>
+    ${template.value.htmlBody || ''}
+  `;
+};
 </script>
 
 <template>
@@ -347,11 +354,13 @@ const handleTemplateSelect = (selectedTemplate: ListedMailTemplate) => {
         </div>
         <div class=":uno: h-full" v-show="preview">
           <VLoading v-if="isLoading" />
-          <div v-else
-               ref="previewRef"
-               class=":uno: preview line-numbers"
-               v-html="template.htmlBody">
-          </div>
+          <iframe
+            v-else
+            ref="previewRef"
+            class=":uno: w-full h-full border-0"
+            :srcdoc="getIframeContent()"
+            sandbox="allow-same-origin"
+          ></iframe>
         </div>
       </div>
     </Transition>

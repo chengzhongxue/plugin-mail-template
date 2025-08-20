@@ -22,6 +22,7 @@ export default definePlugin({
           title: "邮件模板管理",
           description: '查看、编辑 邮件模板',
           searchable: true,
+          hideFooter: true,
           permissions: ["*"],
           menu: {
             name: "邮件模板管理",

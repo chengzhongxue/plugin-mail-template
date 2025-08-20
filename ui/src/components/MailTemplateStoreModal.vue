@@ -8,7 +8,6 @@ import {
   VEmpty,
   IconRefreshLine,
   IconCheckboxFill,
-  IconLink,
   VPagination, 
   VLoading
 } from "@halo-dev/components";
@@ -19,6 +18,7 @@ import { useQuery } from "@tanstack/vue-query";
 import LazyImage from "@/components/LazyImage.vue";
 import storeApiClient from "@/utils/store-api-client";
 import {timeAgo} from "../utils/date";
+import HtmlViewModal from "@/components/HtmlViewModal.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -95,8 +95,33 @@ const handleSelect = () => {
     modal.value?.close();
   }
 };
+
+const htmlContent = ref("");
+const htmlTitle = ref("");
+const openHtmlViewModal = ref(false);
+
+const onHtmlViewModalClose = () => {
+  openHtmlViewModal.value = false;
+};
+
+const handleOpenHtmlViewModal = (content: string, title: string) => {
+  htmlContent.value = content || ""
+  htmlTitle.value = title
+  openHtmlViewModal.value = true;
+};
+
+function toMailTemplate() {
+  window.open("https://www.yunext.cn/mail-template", "_blank")
+}
+
 </script>
 <template>
+  <HtmlViewModal
+    v-if="openHtmlViewModal"
+    :title="htmlTitle"
+    :content="htmlContent"
+    @close="onHtmlViewModalClose"
+  />
   <VModal
     mount-to-body
     layer-closable
@@ -106,19 +131,6 @@ const handleSelect = () => {
     height="calc(-20px + 100vh)"
     :centered="false"
     @close="emit('close')">
-    <template #actions>
-      <slot name="actions" />
-      <span
-        v-tooltip="{
-          content: '跳转到 模版市场',
-          delay: 300,
-        }"
-      >
-        <a :href="`https://www.yunext.cn/mail-template`" target="_blank">
-          <IconLink />
-        </a>
-      </span>
-    </template>
     <div>
       <div class=":uno: block w-full bg-gray-50 px-4 py-3">
         <div
@@ -128,6 +140,17 @@ const handleSelect = () => {
             <SearchInput v-model="keyword" />
           </div>
           <VSpace spacing="lg" class=":uno: flex-wrap">
+            <VButton
+              v-tooltip="{
+                content: '跳转到 模版市场',
+                delay: 300,
+              }"
+              type="default"
+              size="sm"
+              @click="toMailTemplate"
+            >
+              提交模版
+            </VButton>
             <div class=":uno: flex flex-row gap-2">
               <div
                 class=":uno: group cursor-pointer rounded p-1 hover:bg-gray-200"
@@ -163,10 +186,10 @@ const handleSelect = () => {
                   ':uno: ring-primary ring-1': isChecked(mailTemplate),
                 }"
                 class=":uno: hover:shadow drag-element "
-                @click="isChecked(mailTemplate) ? selectedMailTemplate = undefined : selectedMailTemplate = mailTemplate"
               >
-                <div class=":uno: group relative bg-white cursor-pointer">
-                  <div class=":uno: block aspect-16/9 size-full overflow-hidden bg-gray-100 relative">
+                <div class=":uno: group relative bg-white">
+                  <div class=":uno: block aspect-16/9 size-full overflow-hidden bg-gray-100 relative cursor-pointer" 
+                       @click="isChecked(mailTemplate) ? selectedMailTemplate = undefined : selectedMailTemplate = mailTemplate">
                     <LazyImage
                       :key="mailTemplate.mailTemplate.metadata.name"
                       :alt="mailTemplate.mailTemplate.spec.displayName"
@@ -199,19 +222,32 @@ const handleSelect = () => {
                         {{ mailTemplate.mailTemplate.spec.description }}
                       </p>
                     </div>
-                    <div
-                      class=":uno: mt-1 w-full flex flex-1 items-center justify-between gap-2"
-                      v-if="mailTemplate.owner"
-                    >
-                      <div class=":uno: inline-flex items-center gap-1.5">
-                        <img
-                          v-if="mailTemplate.owner?.avatar"
-                          class=":uno: w-5 h-5 rounded-full"
-                          :src="mailTemplate.owner?.avatar"
-                          :alt="mailTemplate.owner?.displayName"
-                          loading="lazy"
-                        />
-                        <span class=":uno: text-xs text-gray-700"> {{ mailTemplate.owner?.displayName }} </span>
+                    <div class=":uno: flex flex-col mt-auto">
+                      <div
+                        class=":uno: mt-1 w-full flex flex-1 items-center justify-between gap-2"
+                        v-if="mailTemplate.owner"
+                      >
+                        <div class=":uno: inline-flex items-center gap-1.5">
+                          <img
+                            v-if="mailTemplate.owner?.avatar"
+                            class=":uno: w-5 h-5 rounded-full"
+                            :src="mailTemplate.owner?.avatar"
+                            :alt="mailTemplate.owner?.displayName"
+                            loading="lazy"
+                          />
+                          <span class=":uno: text-xs text-gray-700"> {{ mailTemplate.owner?.displayName }} </span>
+                        </div>
+                        <div
+                          class=":uno: inline-flex items-center gap-1"
+                        >
+                          <VButton
+                            type="primary"
+                            size="sm"
+                            @click="handleOpenHtmlViewModal(mailTemplate.mailTemplate.spec.htmlBody,mailTemplate.mailTemplate.spec.displayName)"
+                          >
+                            预览
+                          </VButton>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -220,7 +256,8 @@ const handleSelect = () => {
                     v-if="!mailTemplate.mailTemplate.metadata.deletionTimestamp"
                     v-permission="['plugin:equipment:manage']"
                     :class="{ ':uno: !flex': isChecked(mailTemplate) }"
-                    class=":uno: absolute left-0 top-0 hidden h-1/3 w-full justify-end from-gray-300 to-transparent bg-gradient-to-b ease-in-out group-hover:flex"
+                    class=":uno: absolute left-0 top-0 hidden h-1/3 w-full justify-end from-gray-300 to-transparent bg-gradient-to-b ease-in-out  cursor-pointer group-hover:flex"
+                    @click="isChecked(mailTemplate) ? selectedMailTemplate = undefined : selectedMailTemplate = mailTemplate"
                   >
                     <IconCheckboxFill
                       :class="{
