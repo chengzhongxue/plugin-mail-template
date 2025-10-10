@@ -53,4 +53,7 @@ build {
 
 halo {
     version = '2.21.0'
+    // 开启 debug 断点模式
+    debug = true
+    suspend = true
 }

@@ -260,6 +260,7 @@ const getIframeContent = () => {
     </VSpace>
     <VSpace>
       <VButton
+        v-if="!['new-entry-on-form'].includes(reasonType?.metadata.name)"
         type="primary"
         :loading="verifySendIsLoading || restoreIsLoading"
         :disabled="!isUpdate"

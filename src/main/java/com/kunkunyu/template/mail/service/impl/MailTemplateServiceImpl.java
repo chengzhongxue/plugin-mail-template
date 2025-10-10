@@ -18,6 +18,7 @@ import run.halo.app.notification.NotificationCenter;
 import run.halo.app.notification.NotificationReasonEmitter;
 import run.halo.app.notification.UserIdentity;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,9 @@ public class MailTemplateServiceImpl implements MailTemplateService {
 
         for (ReasonType.ReasonProperty property : properties) {
             String name = property.getName();
-            attributes.put(name,name);
+            String type = property.getType();
+            Object value = generateValueByType(type, name);
+            attributes.put(name, value);
         }
 
         var reasonSubject = Reason.Subject.builder()
@@ -114,5 +117,20 @@ public class MailTemplateServiceImpl implements MailTemplateService {
                 }
                 return Mono.just(user);
             });
+    }
+
+    private Object generateValueByType(String type, String name) {
+        if (type == null) {
+            return name;
+        }
+        
+        return switch (type.toLowerCase()) {
+            case "string", "date", "url", "email" -> name;
+            case "number", "integer", "int" -> 123;
+            case "boolean", "bool" -> false;
+            case "array", "list" -> new ArrayList<>();
+            case "object", "map" -> new HashMap();
+            default -> name;
+        };
     }
 }
