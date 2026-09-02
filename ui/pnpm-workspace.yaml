@@ -1,3 +1,11 @@
 onlyBuiltDependencies:
 - esbuild
 - vue-demi
+overrides:
+  '@codemirror/state': 6.7.2
+  '@lezer/common': 1.5.2
+  'defu@<=6.1.4': 6.1.5
+  'flatted@<3.4.2': 3.4.2
+  'immutable@>=5.0.0 <5.1.8': 5.1.8
+  'npm-run-all2>picomatch': 4.0.7
+  'picomatch@<2.3.2': 2.3.2

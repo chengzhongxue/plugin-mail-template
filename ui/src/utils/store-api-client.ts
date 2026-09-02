@@ -1,49 +1,35 @@
-import axios from "axios";
-import type { AxiosError } from "axios";
-import qs from "qs";
-import {Toast} from "@halo-dev/components";
+import { Toast } from "@halo-dev/components";
+import axios, { type AxiosError } from "axios";
+
+export const TEMPLATE_STORE_URL = "https://www.yunext.cn";
 
 const storeApiClient = axios.create({
-  baseURL: 'https://www.yunext.cn',
-  paramsSerializer: (params) => {
-    return qs.stringify(params, { arrayFormat: "repeat" });
+  baseURL: TEMPLATE_STORE_URL,
+  paramsSerializer: {
+    indexes: null,
   },
+  timeout: 15_000,
 });
+
 storeApiClient.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  async (error: AxiosError<ProblemDetail>) => {
-    if (/Network Error/.test(error.message)) {
-      Toast.error("网络错误，请检查网络连接");
+  (response) => response,
+  (error: AxiosError<ProblemDetail>) => {
+    if (/Network Error/i.test(error.message) || !error.response) {
+      Toast.error("模板市场连接失败，请检查网络连接");
       return Promise.reject(error);
     }
 
-    const errorResponse = error.response;
-
-    if (!errorResponse) {
-      Toast.error("网络错误，请检查网络连接");
-      return Promise.reject(error);
-    }
-    
-    const { title, detail } = errorResponse.data;
-    
-    if (title || detail) {
-      Toast.error(detail || title);
-      return Promise.reject(error);
-    }
-
-    Toast.error("未知错误");
-
+    const { detail, title } = error.response.data ?? {};
+    Toast.error(detail || title || "模板市场请求失败");
     return Promise.reject(error);
-  }
+  },
 );
 
 export interface ProblemDetail {
-  detail: string;
-  instance: string;
-  status: number;
-  title: string;
+  detail?: string;
+  instance?: string;
+  status?: number;
+  title?: string;
   type?: string;
 }
 

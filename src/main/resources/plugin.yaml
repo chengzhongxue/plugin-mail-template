@@ -6,7 +6,7 @@ metadata:
     "store.halo.run/app-id": "app-rnPqE"
 spec:
   enabled: false
-  requires: ">=2.21.0"
+  requires: ">=2.26.0"
   author:
     name: 困困鱼
     website: https://github.com/chengzhongxue
@@ -15,7 +15,7 @@ spec:
   repo: https://github.com/chengzhongxue/plugin-mail-template
   issues: https://github.com/chengzhongxue/plugin-mail-template/issues
   displayName: "邮件模板管理"
-  description: "查看、编辑 邮件模板"
+  description: "安全地查看、校验、编辑和测试邮件通知模板"
   license:
     - name: "GPL-3.0"
       url: "https://github.com/chengzhongxue/plugin-mail-template/blob/main/LICENSE"

@@ -8,7 +8,10 @@ dayjs.extend(utc);
 dayjs.extend(relativeTime);
 dayjs.locale("zh-cn");
 
-export function formatDatetime(date: string | Date | undefined | null, tz?: string): string {
+export function formatDatetime(
+  date: string | Date | undefined | null,
+  tz?: string,
+): string {
   if (!date) {
     return "";
   }
@@ -22,7 +25,10 @@ export function toISOString(date: string | Date | undefined | null): string {
   return dayjs(date).utc(false).toISOString();
 }
 
-export function toDatetimeLocal(date: string | Date | undefined | null, tz?: string): string {
+export function toDatetimeLocal(
+  date: string | Date | undefined | null,
+  tz?: string,
+): string {
   if (!date) {
     return "";
   }
@@ -51,14 +57,14 @@ export function relativeTimeTo(date: string | Date | undefined | null) {
 
 export function formatDate(date: string | Date | undefined | null): string {
   if (!date) {
-    return '';
+    return "";
   }
-  return dayjs(date).format('YYYY-MM-DD HH:mm');
+  return dayjs(date).format("YYYY-MM-DD HH:mm");
 }
 
 export function timeAgo(date: string | Date | undefined | null): string {
   if (!date) {
-    return '';
+    return "";
   }
 
   const currentDate = new Date();
