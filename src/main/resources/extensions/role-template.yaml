@@ -1,0 +1,24 @@
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: role-template-plugin-mail-template-manage
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "Mail Template"
+    rbac.authorization.halo.run/display-name: "管理邮件模板"
+    rbac.authorization.halo.run/ui-permissions: |
+      ["plugin:mail-template:manage"]
+rules:
+  - apiGroups: ["notification.halo.run"]
+    resources: ["reasontypes", "notificationtemplates"]
+    verbs: ["get", "list"]
+  - apiGroups: ["api.mail.template.kunkunyu.com"]
+    resources: ["mailtemplates"]
+    verbs: ["update", "delete"]
+  - apiGroups: ["api.mail.template.kunkunyu.com"]
+    resources: ["mailtemplates/validate", "mailtemplates/verify-send"]
+    verbs: ["create"]
+  - apiGroups: ["api.mail.template.kunkunyu.com"]
+    resources: ["mailtemplates/pending-reasons"]
+    verbs: ["get"]
