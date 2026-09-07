@@ -1,94 +1,22 @@
-# 邮件模板管理
+# plugin-mail-template
 
-面向 Halo 2.26 的邮件通知模板编辑插件。它可以在 Console 中查看通知类型、编辑标题、HTML/纯文本正文、预览模板，并向当前用户邮箱执行测试发送。
+## 功能预览
+![Snipaste_2025-04-11_17-39-45.webp](https://api.minio.yyds.pink/halo-docs/2025/04/Snipaste_2025-04-11_17-39-45.webp)
 
-## 主要能力
+![Snipaste_2025-04-11_17-39-58.webp](https://api.minio.yyds.pink/halo-docs/2025/04/Snipaste_2025-04-11_17-39-58.webp)
 
-- 使用 Halo 2.26 自带的 Thymeleaf 3.1 引擎，在保存和测试发送前校验模板。
-- 语法错误会直接返回具体部位和行列位置，不再等到通知队列消费时才暴露。
-- “保存并测试”会先保存当前草稿，再同步执行通知流程，并确保清理临时订阅。
-- 保存、恢复与测试在服务端按通知类型串行执行；测试会校验刚保存模板的身份，避免同一插件的并发操作误测其他版本。
-- 支持编辑 HTML 与纯文本正文、全屏模式、快捷键 `Ctrl/Cmd + S`、模板参数说明和隔离预览。
-- 自定义模板继续使用 `template-one-<reasonType>` 命名空间，兼容 1.1.x 已有数据；保存时会针对该通知类型现有的每个语言键创建同内容的新版本并清理旧版本，确保 Halo 按站点语言选择后仍命中刚保存的内容。
-- 保存前检查待处理 Reason；存在历史通知时默认拒绝写入，只有管理员看见数量并明确确认可能补发后才继续。
+![Snipaste_2025-04-10_01-37-00.webp](https://api.minio.yyds.pink/halo-docs/2025/04/Snipaste_2025-04-10_01-37-00.webp)
 
-## 兼容性
+## 使用文档
 
-| 插件版本 | Halo 版本 | Java | 前端基线 |
-| --- | --- | --- | --- |
-| 1.2.x | >= 2.26.0 | 21 | Vue 3.5 / Vite 8 / TypeScript 6 |
-| 1.1.x | >= 2.21.0 | 17 | 旧版 Rspack 工具链 |
+- 文档：https://docs.kunkunyu.com/docs/mail-template
+- 注意事项：不会改的请不要随意修改，否则会导致模版失效
+- 安装完成后，在 Halo 后台管理界面左侧菜单栏中找到`工具`选项
+- 点击`邮件模板管理` 选择对应的模版
 
-1.2.x 不再面向 Halo 2.21–2.25 构建。如需继续运行旧 Halo，请保留 1.1.x 插件包。
+## 交流群
+* 添加企业微信 （备注进群）
+<img width="360" src="https://api.minio.yyds.pink/kunkunyu/files/2025/02/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20250212142105-pbceif.jpg" />
 
-## 使用方法
-
-1. 安装并启用插件。
-2. 在 Console 左侧的“工具”中打开“邮件模板管理”。
-3. 选择通知类型，编辑标题、HTML 正文或纯文本正文。
-4. 点击“保存”。服务端校验通过后才会写入模板。
-5. 点击“保存并测试”，插件会携带刚保存的模板身份执行测试；若期间另一个保存操作替换了该版本，测试会返回冲突而不会误测其他内容。Halo 的通知中心会记录后续 SMTP 错误，因此还应检查邮箱与 Halo 日志。
-
-若 Halo 中已有该通知类型的待处理 Reason，保存前会出现高风险确认框并显示数量。取消确认不会写入模板，也不会触发历史通知；确认后，Halo 可能补发这些消息。插件提供的串行锁只覆盖本插件的保存、恢复和测试接口，管理员绕过插件直接修改 `NotificationTemplate` 不在此保证范围内。
-
-非超级管理员需要被授予插件提供的“管理邮件模板”角色模板。
-
-## Thymeleaf 默认值语法
-
-Elvis 运算符 `?:` 两侧应是两个完整表达式。下面是合法写法：
-
-```html
-<span
-  th:text="${loginTime} ?: ${#dates.format(#dates.createNow(),'yyyy-MM-dd HH:mm')}"
->
-  未提供登录时间
-</span>
-```
-
-下面的写法会触发 `Could not parse as expression`，因为右侧缺少 `${...}`：
-
-```html
-<!-- 错误示例 -->
-<span th:text="${loginTime} ?: #dates.format(#dates.createNow(),'yyyy-MM-dd HH:mm')}"></span>
-```
-
-建议先查看“模板参数”，仅使用对应 ReasonType 声明的业务变量和插件列出的系统变量。
-
-## 从 1.1.x 升级
-
-升级会保留现有 `template-one-*` 自定义模板，不再由 Reconciler 在后台阻塞线程并自动删建。已有模板不会在升级时被静默改写；第一次主动保存时，新版本会执行完整语法校验，创建 Halo 会优先选择的新版本，然后清理旧版本。
-
-如果升级前已经出现 `NotificationTrigger ... re-enqueuing`：
-
-1. 先备份对应 `NotificationTemplate` 和待处理 `Reason` 资源。
-2. 修复并保存模板语法。
-3. 检查待处理 Reason 的数量和时间范围。
-4. 决定是保留并补发历史通知，还是删除不应再发送的积压 Reason。
-
-不要在未检查积压数量时直接修复生产模板；修复后 Halo 可能立即补发历史通知。1.2.x 的界面和服务端均默认阻止这种保存，必须显式确认才会继续。
-
-## 本地开发
-
-环境要求：JDK 21、Node.js 24.11+、pnpm 10。
-
-```bash
-./gradlew clean build
-```
-
-完整构建会执行 Java 单元测试、前端类型检查、ESLint、Prettier 检查及 Vite 构建，产物位于 `build/libs/`。
-
-单独开发前端：
-
-```bash
-cd ui
-pnpm install
-pnpm dev
-```
-
-## 模板市场与隐私
-
-“模板市场”来自第三方服务 `https://www.yunext.cn`。只有主动打开市场时才会请求该服务。市场图片只接受 HTTPS 地址并使用 `no-referrer`；模板预览使用无脚本 iframe sandbox。从市场导入后仍须通过本地 Halo Thymeleaf 校验。
-
-## 许可证
-
-[GPL-3.0](LICENSE)
+* QQ群
+<img width="360" src="https://api.minio.yyds.pink/kunkunyu/files/2025/05/qq-708998089-iqowsh.webp" />

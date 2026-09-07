@@ -19,5 +19,7 @@ public interface MailTemplateService {
 
     Mono<Void> deleteCustomTemplates(String reasonTypeName);
 
+    Mono<Void> restoreCustomTemplatePriority(String reasonTypeName);
+
     Mono<Void> sendVerification(String reasonTypeName, String templateName);
 }

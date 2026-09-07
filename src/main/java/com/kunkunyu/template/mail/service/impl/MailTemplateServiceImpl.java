@@ -110,6 +110,38 @@ public class MailTemplateServiceImpl implements MailTemplateService {
     }
 
     @Override
+    public Mono<Void> restoreCustomTemplatePriority(String reasonTypeName) {
+        return withReasonTypeLock(reasonTypeName, () ->
+            listReasonTemplates(reasonTypeName)
+                .filter(template -> !ExtensionUtil.isDeleted(template))
+                .collectList()
+                .flatMap(existingTemplates -> {
+                    var customByLanguage = newestByLanguage(existingTemplates.stream()
+                        .filter(template -> isCustomTemplate(template, reasonTypeName))
+                        .toList());
+                    Map<String, NotificationTemplate.Template> replacements =
+                        new LinkedHashMap<>();
+                    newestByLanguage(existingTemplates).forEach((language, selected) -> {
+                        if (isCustomTemplate(selected, reasonTypeName)) {
+                            return;
+                        }
+                        var custom = customByLanguage.getOrDefault(
+                            language, customByLanguage.get(DEFAULT_LANGUAGE));
+                        if (custom != null) {
+                            replacements.put(language, custom.getSpec().getTemplate());
+                        }
+                    });
+                    if (replacements.isEmpty()) {
+                        return Mono.empty();
+                    }
+                    // Plugin restarts recreate bundled templates with newer timestamps.
+                    // Preserve existing edits, including legacy template-one-* resources.
+                    return replaceCustomTemplates(
+                        reasonTypeName, replacements, existingTemplates, false).then();
+                }));
+    }
+
+    @Override
     public Mono<Void> sendVerification(
         String reasonTypeName, String templateName) {
         return withReasonTypeLock(reasonTypeName, () -> Mono.zip(
@@ -321,30 +353,41 @@ public class MailTemplateServiceImpl implements MailTemplateService {
         String reasonTypeName,
         NotificationTemplate.Template templateContent,
         List<NotificationTemplate> existingTemplates) {
-        var previousCustomTemplates = existingTemplates.stream()
-            .filter(template -> isCustomTemplate(template, reasonTypeName))
-            .toList();
         Set<String> languages = new LinkedHashSet<>();
         languages.add(DEFAULT_LANGUAGE);
         existingTemplates.stream()
             .map(this::languageOf)
             .forEach(languages::add);
 
+        Map<String, NotificationTemplate.Template> replacements = new LinkedHashMap<>();
+        languages.forEach(language -> replacements.put(language, templateContent));
+        return replaceCustomTemplates(reasonTypeName, replacements, existingTemplates, true)
+            .map(created -> created.stream()
+                .filter(template -> DEFAULT_LANGUAGE.equals(languageOf(template)))
+                .findFirst()
+                .orElse(created.get(0)));
+    }
+
+    private Mono<List<NotificationTemplate>> replaceCustomTemplates(
+        String reasonTypeName,
+        Map<String, NotificationTemplate.Template> replacements,
+        List<NotificationTemplate> existingTemplates,
+        boolean requireAllLanguages) {
+        var previousCustomTemplates = existingTemplates.stream()
+            .filter(template -> isCustomTemplate(template, reasonTypeName))
+            .filter(template -> replacements.containsKey(languageOf(template)))
+            .toList();
         return Mono.usingWhen(
             Mono.fromSupplier(() -> new ArrayList<NotificationTemplate>()),
-            createdTemplates -> Flux.fromIterable(languages)
-                .concatMap(language -> createCustomTemplate(
-                        reasonTypeName, language, copyTemplate(templateContent))
+            createdTemplates -> Flux.fromIterable(replacements.entrySet())
+                .concatMap(entry -> createCustomTemplate(
+                        reasonTypeName, entry.getKey(), copyTemplate(entry.getValue()))
                     .doOnNext(createdTemplates::add))
                 .collectList()
                 .flatMap(created -> assertTemplatesAreSelected(
-                        reasonTypeName, created)
+                        reasonTypeName, created, requireAllLanguages)
                     .then(cleanupSupersededTemplates(previousCustomTemplates))
-                    .thenReturn(created.stream()
-                        .filter(template -> DEFAULT_LANGUAGE.equals(
-                            languageOf(template)))
-                        .findFirst()
-                        .orElse(created.get(0)))),
+                    .thenReturn(created)),
             ignored -> Mono.empty(),
             (createdTemplates, error) -> cleanupCreatedTemplates(
                 createdTemplates, "failed", error),
@@ -376,22 +419,28 @@ public class MailTemplateServiceImpl implements MailTemplateService {
 
     private Mono<Void> assertTemplatesAreSelected(
         String reasonTypeName,
-        List<NotificationTemplate> createdTemplates) {
+        List<NotificationTemplate> createdTemplates,
+        boolean requireAllLanguages) {
         var expectedNames = createdTemplates.stream()
             .map(template -> template.getMetadata().getName())
+            .collect(java.util.stream.Collectors.toSet());
+        var expectedLanguages = createdTemplates.stream()
+            .map(this::languageOf)
             .collect(java.util.stream.Collectors.toSet());
         return listReasonTemplates(reasonTypeName)
             .filter(template -> !ExtensionUtil.isDeleted(template))
             .collectList()
             .flatMap(candidates -> {
                 var selectedByLanguage = newestByLanguage(candidates);
-                if (selectedByLanguage.size() < createdTemplates.size()) {
+                if (!selectedByLanguage.keySet().containsAll(expectedLanguages)) {
                     return Mono.error(new ResponseStatusException(
                         HttpStatus.CONFLICT,
                         "Halo 未找到刚保存的全部语言模板"));
                 }
 
                 return selectedByLanguage.values().stream()
+                    .filter(selected -> requireAllLanguages
+                        || expectedLanguages.contains(languageOf(selected)))
                     .filter(selected -> !expectedNames.contains(
                         selected.getMetadata().getName()))
                     .findFirst()
