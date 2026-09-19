@@ -69,7 +69,8 @@ const iframeHeight = computed(() => {
       >
         <div class=":uno: border">
           <codemirror
-            v-model="content"
+            :model-value="content"
+            disabled
             :style="{ height: '100%'}"
             :autofocus="true"
             :indent-with-tab="true"

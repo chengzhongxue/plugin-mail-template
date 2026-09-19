@@ -8,7 +8,7 @@ import {
   VEmpty,
   IconRefreshLine,
   IconCheckboxFill,
-  VPagination, 
+  VPagination,
   VLoading
 } from "@halo-dev/components";
 import type {ReasonType} from "@halo-dev/api-client";
@@ -181,14 +181,14 @@ function toMailTemplate() {
               <VCard
                 v-for="mailTemplate in mailTemplates"
                 :key="mailTemplate.mailTemplate.metadata.name"
-                :body-class="[':uno: !p-0']"
+                :body-class="['!p-0']"
                 :class="{
                   ':uno: ring-primary ring-1': isChecked(mailTemplate),
                 }"
                 class=":uno: hover:shadow drag-element "
               >
                 <div class=":uno: group relative bg-white">
-                  <div class=":uno: block aspect-16/9 size-full overflow-hidden bg-gray-100 relative cursor-pointer" 
+                  <div class=":uno: block aspect-16/9 size-full overflow-hidden bg-gray-100 relative cursor-pointer"
                        @click="isChecked(mailTemplate) ? selectedMailTemplate = undefined : selectedMailTemplate = mailTemplate">
                     <LazyImage
                       :key="mailTemplate.mailTemplate.metadata.name"
@@ -208,7 +208,7 @@ function toMailTemplate() {
                       </template>
                     </LazyImage>
                   </div>
-                  
+
                   <div class=":uno: p-2 flex flex-col h-full">
                     <div>
                       <div class=":uno: flex items-center justify-between mb-1">
@@ -251,7 +251,7 @@ function toMailTemplate() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div
                     v-if="!mailTemplate.mailTemplate.metadata.deletionTimestamp"
                     v-permission="['plugin:equipment:manage']"
@@ -279,8 +279,8 @@ function toMailTemplate() {
     </div>
     <template #footer>
       <VSpace>
-        <VButton 
-          type="secondary" 
+        <VButton
+          type="secondary"
           :disabled="selectedMailTemplate == undefined"
           @click="handleSelect"
         >
