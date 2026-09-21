@@ -1,6 +1,11 @@
 package com.kunkunyu.template.mail.service.impl;
 
+import static run.halo.app.extension.index.query.Queries.and;
+import static run.halo.app.extension.index.query.Queries.equal;
+import static run.halo.app.extension.index.query.Queries.isNull;
+
 import com.kunkunyu.template.mail.service.MailTemplateService;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -8,20 +13,19 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import run.halo.app.core.extension.User;
+import run.halo.app.core.extension.notification.NotificationTemplate;
 import run.halo.app.core.extension.notification.Reason;
 import run.halo.app.core.extension.notification.ReasonType;
 import run.halo.app.core.extension.notification.Subscription;
+import run.halo.app.extension.ExtensionUtil;
 import run.halo.app.extension.GroupVersion;
+import run.halo.app.extension.ListOptions;
 import run.halo.app.extension.ReactiveExtensionClient;
 import run.halo.app.notification.NotificationCenter;
 import run.halo.app.notification.NotificationReasonEmitter;
 import run.halo.app.notification.UserIdentity;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +36,10 @@ public class MailTemplateServiceImpl implements MailTemplateService {
     private final NotificationReasonEmitter notificationReasonEmitter;
 
     private final NotificationCenter notificationCenter;
+
+    private final NotificationTemplateValidator notificationTemplateValidator;
+
+    private static final String DEFAULT_LANGUAGE = "default";
 
     @Override
     public Mono<Void> verifyMailTemplatSend(String reasonTypeName) {
@@ -44,22 +52,34 @@ public class MailTemplateServiceImpl implements MailTemplateService {
             );
     }
 
-    private Mono<Void> sendVerifyNotification(ReasonType reasonType, String username, String email) {
+
+    @Override
+    public Mono<Void> verifyMailTemplatSend(ReasonType reasonType) {
+        return getCurrentUser()
+            .flatMap(user -> sendVerifyNotification(reasonType,user.getMetadata().getName(),user.getSpec().getEmail()));
+    }
+
+
+    public Mono<Void> sendVerifyNotification(ReasonType reasonType, String username, String email) {
+        return findEffectiveTemplate(reasonType.getMetadata().getName())
+            .flatMap(notificationTemplate -> Mono.fromRunnable(() -> {
+                var spec = notificationTemplate.getSpec();
+                notificationTemplateValidator.validate(
+                    spec == null ? null : spec.getTemplate(), reasonType);
+            })
+                .subscribeOn(Schedulers.boundedElastic())
+                .onErrorMap(TemplateValidationException.class,
+                    error -> new ServerWebInputException(error.getMessage()))
+                .then(Mono.defer(() -> emitVerifyNotification(reasonType, username, email))));
+    }
+
+    private Mono<Void> emitVerifyNotification(ReasonType reasonType, String username, String email) {
         String reasonTypeName = reasonType.getMetadata().getName();
         var subscribeNotification = subscribeVerifyNotification(email,reasonTypeName);
         var interestReasonSubject = createInterestReason(email,reasonTypeName).getSubject();
         var unsubscrNotification = unsubscribeVerifyNotification(email,reasonTypeName);
 
-        List<ReasonType.ReasonProperty> properties = reasonType.getSpec().getProperties();
-
-        Map<String,Object> attributes = new HashMap<>();
-
-        for (ReasonType.ReasonProperty property : properties) {
-            String name = property.getName();
-            String type = property.getType();
-            Object value = generateValueByType(type, name);
-            attributes.put(name, value);
-        }
+        var attributes = notificationTemplateValidator.createReasonAttributes(reasonType);
 
         var reasonSubject = Reason.Subject.builder()
             .apiVersion(interestReasonSubject.getApiVersion())
@@ -76,6 +96,30 @@ public class MailTemplateServiceImpl implements MailTemplateService {
             });
 
         return Mono.when(subscribeNotification).then(emitReasonMono).then(unsubscrNotification);
+    }
+
+    private Mono<NotificationTemplate> findEffectiveTemplate(String reasonTypeName) {
+        var listOptions = ListOptions.builder()
+            .fieldQuery(and(
+                equal("spec.reasonSelector.reasonType", reasonTypeName),
+                isNull("metadata.deletionTimestamp")
+            ))
+            .build();
+        return client.listAll(NotificationTemplate.class, listOptions, ExtensionUtil.defaultSort())
+            .next();
+    }
+
+    private static String metadataName(NotificationTemplate notificationTemplate) {
+        var metadata = notificationTemplate.getMetadata();
+        return metadata == null ? null : metadata.getName();
+    }
+
+    private static String templateLanguage(NotificationTemplate notificationTemplate) {
+        var spec = notificationTemplate.getSpec();
+        if (spec == null || spec.getReasonSelector() == null) {
+            return null;
+        }
+        return spec.getReasonSelector().getLanguage();
     }
 
     Mono<Void> subscribeVerifyNotification(String email, String reasonType) {
@@ -117,20 +161,5 @@ public class MailTemplateServiceImpl implements MailTemplateService {
                 }
                 return Mono.just(user);
             });
-    }
-
-    private Object generateValueByType(String type, String name) {
-        if (type == null) {
-            return name;
-        }
-        
-        return switch (type.toLowerCase()) {
-            case "string", "date", "url", "email" -> name;
-            case "number", "integer", "int" -> 123;
-            case "boolean", "bool" -> false;
-            case "array", "list" -> new ArrayList<>();
-            case "object", "map" -> new HashMap();
-            default -> name;
-        };
     }
 }

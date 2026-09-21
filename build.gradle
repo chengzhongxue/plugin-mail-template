@@ -16,9 +16,12 @@ repositories {
 dependencies {
     implementation platform('run.halo.tools.platform:plugin:2.26.0')
     compileOnly 'run.halo.app:api'
+    compileOnly "run.halo.mcpserver:api:1.0.0"
 
     testImplementation 'run.halo.app:api'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testCompileOnly "run.halo.mcpserver:api:1.0.0"
+    testRuntimeOnly "run.halo.mcpserver:api:1.0.0"
 }
 
 test {
