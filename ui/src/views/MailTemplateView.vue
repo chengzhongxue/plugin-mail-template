@@ -18,15 +18,56 @@ import RiMenuUnfoldLine from '~icons/ri/menu-unfold-line?width=1.2em&height=1.2e
 import RiMenuFoldLine from '~icons/ri/menu-fold-line?width=1.2em&height=1.2em';
 import MailTemplateStoreModal from "@/components/MailTemplateStoreModal.vue";
 import type {ListedMailTemplate} from "@/types";
+import { saveCustomTemplate, applyCustomTemplate, deleteCustomTemplate, type CustomTemplate } from "@/utils/custom-templates";
 
 const props = withDefaults(
-  defineProps<{ reasonType?: ReasonType }>(),
+  defineProps<{ reasonType?: ReasonType; customTemplate?: CustomTemplate }>(),
   {
     reasonType: undefined
   }
 );
 
 const queryClient = useQueryClient();
+const emit = defineEmits<{ (event: "deleted"): void }>();
+const editorView = ref<EditorView>();
+const actionBusy = ref(false);
+function insertParameter(expression: string) {
+  propertiesDetailModal.value = false;
+  preview.value = false;
+  if (editorView.value) {
+    editorView.value.dispatch(editorView.value.state.replaceSelection(expression));
+    editorView.value.focus();
+  }
+}
+function applyDraft() {
+  Dialog.warning({
+    title: "应用到通知？",
+    description: `将保存当前内容，并替换“${props.reasonType?.spec?.displayName}”的邮件模板，后续该通知使用此样式。`,
+    confirmText: "保存并应用", cancelText: "取消",
+    onConfirm: async () => {
+      if (!props.customTemplate || actionBusy.value) return;
+      actionBusy.value = true;
+      try {
+        const draft = await saveCustomTemplate(props.customTemplate, template.value.title, template.value.htmlBody);
+        await applyCustomTemplate(draft);
+        await queryClient.invalidateQueries({ queryKey: ["custom-mail-templates"] });
+        await queryClient.invalidateQueries({ queryKey: ["notification-template-value"] });
+        Toast.success("已应用到通知");
+      } finally { actionBusy.value = false; }
+    }
+  });
+}
+function removeDraft() {
+  Dialog.warning({
+    title: "删除自定义模板？", description: "删除此草稿。已应用到通知的样式仍然保留。", confirmText: "删除", cancelText: "取消", confirmType: "danger",
+    onConfirm: async () => {
+      if (!props.customTemplate) return;
+      await deleteCustomTemplate(props.customTemplate);
+      emit("deleted");
+      await queryClient.invalidateQueries({ queryKey: ["custom-mail-templates"] });
+    }
+  });
+}
 const showSidebar = useLocalStorage("plugin-mail-template:show-sidebar", true)
 
 const Q_KEY = (name?: Ref<string | undefined>) => [
@@ -81,12 +122,19 @@ const template = ref({
 })
 
 const { data: value , isLoading} = useQuery({
-  queryKey: Q_KEY(reasonTypeName),
+  refetchOnWindowFocus: false,
+  queryKey: [...Q_KEY(reasonTypeName), props.customTemplate?.metadata.name],
   queryFn: async () => {
+    if (props.customTemplate) return {
+      apiVersion: "notification.halo.run/v1alpha1", kind: "NotificationTemplate",
+      metadata: { name: props.customTemplate.metadata.name },
+      spec: { reasonSelector: { reasonType: props.customTemplate.data.reasonType, language: "default" }, template: {title: props.customTemplate.data.title, htmlBody: props.customTemplate.data.htmlBody, rawBody: props.customTemplate.data.rawBody} }
+    } as NotificationTemplate;
     if (!reasonType.value) return null;
     restoreIsLoading.value = true;
     const { data } = await coreApiClient.notification.notificationTemplate.listNotificationTemplate(
       {
+        page: 0, size: 0,
         fieldSelector: [
           `spec.reasonSelector.reasonType=${reasonTypeName.value}`,
         ]
@@ -100,7 +148,7 @@ const { data: value , isLoading} = useQuery({
       return notificationTemplate;
     }else {
       isUpdate.value = false;
-      return data?.items[0];
+      return data?.items.find(item => !item.metadata.deletionTimestamp && item.spec?.reasonSelector?.language === "default") || data?.items[0];
     }
   },
   refetchInterval: (data) => {
@@ -119,7 +167,7 @@ const { data: value , isLoading} = useQuery({
       formState.value = data
     }
   },
-  enabled: computed(() => !!reasonType.value),
+  enabled: computed(() => !!reasonType.value || !!props.customTemplate),
 });
 
 const previewRef = ref(null);
@@ -128,6 +176,11 @@ const preview = ref(false);
 const { mutate:save, isLoading:saveIsLoading } = useMutation({
   mutationKey: ["template-save"],
   mutationFn: async () => {
+    if (actionBusy.value || !value.value) return;
+    if (props.customTemplate) {
+      await saveCustomTemplate(props.customTemplate, template.value.title, template.value.htmlBody);
+      return;
+    }
     if (template.value.title == null || template.value.title == '') {
       template.value.title = formState.value.spec?.template?.title || ""
     }
@@ -150,7 +203,6 @@ const { mutate:save, isLoading:saveIsLoading } = useMutation({
         notificationTemplate: formState.value
       });
     } else {
-      const metadata  = formState.value.metadata;
       formState.value = {
         ...formState.value,
         spec: {
@@ -161,7 +213,6 @@ const { mutate:save, isLoading:saveIsLoading } = useMutation({
           }
         },
         metadata: {
-          ...metadata,
           name: notificationTemplateOneName.value
         },
       };
@@ -170,8 +221,9 @@ const { mutate:save, isLoading:saveIsLoading } = useMutation({
       });
     }
   },
-  onSuccess(data) {
-    queryClient.invalidateQueries({
+  async onSuccess(data) {
+    await queryClient.invalidateQueries({ queryKey: ["custom-mail-templates"] });
+    await queryClient.invalidateQueries({
       queryKey: Q_KEY(reasonTypeName),
     });
     Toast.success("保存成功");
@@ -255,12 +307,14 @@ const getIframeContent = () => {
         <RiMenuUnfoldLine v-else />
       </div>
       <h2 class=":uno: font-semibold text-gray-900">
-        {{ reasonType?.spec?.displayName }}
+        {{ customTemplate?.data.displayName || reasonType?.spec?.displayName }}
       </h2>
     </VSpace>
     <VSpace>
+      <VButton v-if="customTemplate" size="sm" :loading="actionBusy" :disabled="!reasonType || saveIsLoading" @click="applyDraft">应用到通知</VButton>
+      <VButton v-if="customTemplate" size="sm" :disabled="actionBusy || saveIsLoading" @click="removeDraft">删除</VButton>
       <VButton
-        v-if="!['new-entry-on-form'].includes(reasonType?.metadata.name)"
+        v-if="!customTemplate && reasonType && !['new-entry-on-form'].includes(reasonType.metadata.name)"
         type="primary"
         :loading="verifySendIsLoading || restoreIsLoading"
         :disabled="!isUpdate"
@@ -270,6 +324,7 @@ const getIframeContent = () => {
         验证模板
       </VButton>
       <VButton
+        v-if="!customTemplate"
         :loading="restoreIsLoading"
         :disabled="!isUpdate"
         size="sm"
@@ -280,6 +335,7 @@ const getIframeContent = () => {
       <VButton
         type="secondary"
         :loading="saveIsLoading"
+        :disabled="actionBusy || !value"
         :cronIsLoading="isLoading"
         size="sm"
         @click="save"
@@ -291,6 +347,8 @@ const getIframeContent = () => {
   <TemplatePropertiesDetailModal
     v-if="propertiesDetailModal && reasonType"
     :reason-type="reasonType"
+    :insertable="true"
+    @insert="insertParameter"
     @close="propertiesDetailModal = false"
   />
   <MailTemplateStoreModal
@@ -342,6 +400,7 @@ const getIframeContent = () => {
         </div>
         <div class=":uno: h-full" v-show="!preview">
           <codemirror
+            @ready="editorView = $event.view"
             v-model="template.htmlBody"
             :style="{ height: '100%'}"
             :autofocus="true"

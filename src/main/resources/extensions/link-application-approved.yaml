@@ -1,0 +1,62 @@
+apiVersion: notification.halo.run/v1alpha1
+kind: ReasonType
+metadata:
+  name: mail-template-link-application-approved
+spec:
+  displayName: "友链审核通过"
+  description: "官方链接管理插件审核友链申请后，自动向申请邮箱发送审核结果。"
+  properties:
+    - name: displayName
+      type: string
+      description: "申请的网站名称"
+    - name: websiteUrl
+      type: string
+      description: "申请的网站地址"
+    - name: reviewResult
+      type: string
+      description: "审核结果"
+---
+apiVersion: notification.halo.run/v1alpha1
+kind: NotificationTemplate
+metadata:
+  name: mail-template-link-application-approved
+spec:
+  reasonSelector:
+    reasonType: mail-template-link-application-approved
+    language: default
+  template:
+    title: "友链审核通过：[(${displayName})]"
+    rawBody: |
+      你好：
+
+      你的友链申请已通过审核，感谢与本站交换友链！
+
+      网站名称：[(${displayName})]
+      网站地址：[(${websiteUrl})]
+      审核结果：[(${reviewResult})]
+
+      [(${site.title})]
+      [(${site.url})]
+    htmlBody: |
+      <!DOCTYPE html>
+      <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+      <body style="margin:0;padding:24px 12px;background:#f3f6fa;font-family:Arial,'Microsoft YaHei',sans-serif;color:#334155;">
+        <table role="presentation" style="width:100%;max-width:620px;margin:auto;border-collapse:collapse;background:#fff;">
+          <tr><td style="padding:28px 32px;background:#16a34a;color:#fff;font-size:22px;font-weight:bold;">友链审核通过</td></tr>
+          <tr><td style="padding:28px 32px;line-height:1.8;">
+            <p>你好：</p>
+            <p>你的友链申请已通过审核，感谢与本站交换友链！</p>
+            <table role="presentation" style="width:100%;background:#f8fafc;line-height:1.8;">
+              <tr><td style="padding:16px;">
+                <div>网站名称：<span th:text="${displayName}"></span></div>
+                <div>网站地址：<span th:text="${websiteUrl}"></span></div>
+                <div>审核结果：<strong th:text="${reviewResult}" style="color:#16a34a;"></strong></div>
+              </td></tr>
+            </table>
+            <p style="margin-top:28px;"><a th:href="${site.url}" th:text="${site.title}" style="color:#16a34a;">访问本站</a></p>
+            <p style="font-size:12px;color:#94a3b8;">这是一封自动发送的友链审核结果通知。</p>
+          </td></tr>
+        </table>
+      </body>
+      </html>

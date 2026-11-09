@@ -20,7 +20,6 @@ import run.halo.app.core.extension.notification.Reason;
 import run.halo.app.core.extension.notification.ReasonType;
 import run.halo.app.core.extension.notification.Subscription;
 import run.halo.app.extension.ExtensionUtil;
-import run.halo.app.extension.GroupVersion;
 import run.halo.app.extension.ListOptions;
 import run.halo.app.extension.ReactiveExtensionClient;
 import run.halo.app.notification.NotificationCenter;
@@ -77,7 +76,6 @@ public class MailTemplateServiceImpl implements MailTemplateService {
         String reasonTypeName = reasonType.getMetadata().getName();
         var subscribeNotification = subscribeVerifyNotification(email,reasonTypeName);
         var interestReasonSubject = createInterestReason(email,reasonTypeName).getSubject();
-        var unsubscrNotification = unsubscribeVerifyNotification(email,reasonTypeName);
 
         var attributes = notificationTemplateValidator.createReasonAttributes(reasonType);
 
@@ -95,7 +93,8 @@ public class MailTemplateServiceImpl implements MailTemplateService {
                     .subject(reasonSubject);
             });
 
-        return Mono.when(subscribeNotification).then(emitReasonMono).then(unsubscrNotification);
+        // Halo resolves subscriptions asynchronously; immediate unsubscribe can lose the email.
+        return subscribeNotification.then(emitReasonMono);
     }
 
     private Mono<NotificationTemplate> findEffectiveTemplate(String reasonTypeName) {
@@ -106,7 +105,14 @@ public class MailTemplateServiceImpl implements MailTemplateService {
             ))
             .build();
         return client.listAll(NotificationTemplate.class, listOptions, ExtensionUtil.defaultSort())
-            .next();
+            .collectList()
+            .flatMap(templates -> Mono.justOrEmpty(templates.stream()
+                .filter(template -> ("template-one-" + reasonTypeName).equals(metadataName(template)))
+                .findFirst()
+                .or(() -> templates.stream()
+                    .filter(template -> DEFAULT_LANGUAGE.equals(templateLanguage(template))).findFirst())
+                .or(() -> templates.stream().findFirst())))
+            .switchIfEmpty(Mono.error(new ServerWebInputException("没有对应邮件模板")));
     }
 
     private static String metadataName(NotificationTemplate notificationTemplate) {
@@ -141,7 +147,7 @@ public class MailTemplateServiceImpl implements MailTemplateService {
         var interestReason = new Subscription.InterestReason();
         interestReason.setReasonType(reasonType);
         interestReason.setSubject(Subscription.ReasonSubject.builder()
-            .apiVersion(new GroupVersion(User.GROUP, User.KIND).toString())
+            .apiVersion("v1alpha1")
             .kind(User.KIND)
             .name(UserIdentity.anonymousWithEmail(email).name())
             .build());
