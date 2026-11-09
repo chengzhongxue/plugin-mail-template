@@ -12,6 +12,7 @@ import { computed, ref, watch } from "vue";
 import CreateCustomTemplateModal from "@/components/CreateCustomTemplateModal.vue";
 import { listCustomTemplates, type CustomTemplate } from "@/utils/custom-templates";
 import MailTemplateView from "@/views/MailTemplateView.vue";
+import StandaloneTemplateView from "@/views/StandaloneTemplateView.vue";
 import FluentMailTemplate24Regular from '~icons/fluent/mail-template-24-regular';
 import {useLocalStorage} from "@vueuse/core";
 import { loadOrder, saveOrder, mergeOrder, moveTemplate, ORDER_QUERY_KEY } from "@/utils/template-order";
@@ -38,7 +39,7 @@ const { data: reasonTypes } = useQuery({
   queryFn: async () => {
     const { data } =
       await coreApiClient.notification.reasonType.listReasonType({ page: 0, size: 0 });
-    return data;
+    return { ...data, items: data.items.filter(item => item.metadata.name !== "mail-template-standalone-dispatch") };
   },
 });
 
@@ -194,12 +195,13 @@ watch(
                 <VButton size="sm" type="primary" :loading="orderSaving" :disabled="!orderDirty || orderLoading || orderError" @click="persistOrder">保存排序</VButton>
                 <VButton size="sm" :disabled="!orderDirty || orderSaving" @click="pendingOrder = null; endDrag()">放弃修改</VButton>
               </div>
-              <VButton class=":uno: w-full" :disabled="!reasonTypes?.items.length" @click="createModal = true">＋ 新增模板</VButton>
+              <VButton class=":uno: w-full" @click="createModal = true">＋ 新增模板</VButton>
             </div>
           </div>
           <div :class="[':uno: col-span-12 sm:col-span-8 md:col-span-7 lg:col-span-8 xl:col-span-9',{'!col-span-12' : !showSidebar}]">
+            <StandaloneTemplateView v-if="selectedCustom?.data.mode === 'standalone'" :key="selectedCustom.metadata.name" :draft="selectedCustom" @deleted="selectedCustomName = undefined" />
             <MailTemplateView
-              v-if="!selectedCustomName || selectedCustom"
+              v-else-if="!selectedCustomName || selectedCustom"
               :key="selectedCustomName || selectedReasonTypeName"
               :reason-type="selectedReasonType"
               :custom-template="selectedCustom"

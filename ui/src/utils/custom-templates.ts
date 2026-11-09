@@ -11,7 +11,25 @@ export interface CustomTemplate {
 
 export async function listCustomTemplates(): Promise<CustomTemplate[]> {
   const { data } = await coreApiClient.configMap.listConfigMap({page: 0, size: 0, labelSelector: [`${LABEL}=true`]});
-  return data.items.filter(item => !item.metadata.deletionTimestamp && item.data?.reasonType) as CustomTemplate[];
+  return data.items.filter(item => !item.metadata.deletionTimestamp && (item.data?.reasonType || item.data?.mode === "standalone")) as CustomTemplate[];
+}
+
+export async function createStandaloneTemplate(name: string) {
+  const configMap: CustomTemplate = {
+    apiVersion: "v1alpha1", kind: "ConfigMap",
+    metadata: { name: `mail-template-custom-${crypto.randomUUID()}`, labels: { [LABEL]: "true" } },
+    data: { mode: "standalone", displayName: name.trim(), title: name.trim(),
+      htmlBody: '<p>订单号：<span th:text="${order.number}"></span></p>', rawBody: "",
+      parameterDescription: "order.number：订单号；recipient：本次收件邮箱（系统提供，不可覆盖）。",
+      sampleParameters: '{\n  "order": { "number": "20261109001" }\n}', enabled: "false" },
+  };
+  return (await coreApiClient.configMap.createConfigMap({ configMap })).data as CustomTemplate;
+}
+
+export async function saveStandaloneTemplate(draft: CustomTemplate, fields: Record<string, string>) {
+  const { data: latest } = await coreApiClient.configMap.getConfigMap({ name: draft.metadata.name });
+  return (await coreApiClient.configMap.updateConfigMap({ name: draft.metadata.name,
+    configMap: { ...latest, data: { ...latest.data, ...fields, mode: "standalone" } } })).data as CustomTemplate;
 }
 
 export async function createCustomTemplate(name: string, reasonType: string) {

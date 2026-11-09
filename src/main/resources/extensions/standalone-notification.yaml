@@ -1,0 +1,38 @@
+apiVersion: notification.halo.run/v1alpha1
+kind: ReasonType
+metadata:
+  name: mail-template-standalone-dispatch
+spec:
+  displayName: "独立模板邮件发送（内部）"
+  description: "独立模板接口的内部通知事件，不用于编辑。"
+  properties:
+    - name: mail
+      type: object
+      description: "已经渲染的邮件内容"
+---
+apiVersion: notification.halo.run/v1alpha1
+kind: NotificationTemplate
+metadata:
+  name: mail-template-standalone-dispatch
+spec:
+  reasonSelector:
+    reasonType: mail-template-standalone-dispatch
+    language: default
+  template:
+    title: "[(${mail.title})]"
+    htmlBody: '<th:block th:utext="${mail.htmlBody}"></th:block>'
+    rawBody: "[(${mail.rawBody})]"
+---
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: role-template-mail-standalone-send
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "邮件模板"
+    rbac.authorization.halo.run/display-name: "独立模板预览与发送"
+rules:
+  - apiGroups: ["api.mail.template.kunkunyu.com"]
+    resources: ["standalone-notifications/send", "standalone-notifications/preview"]
+    verbs: ["create"]

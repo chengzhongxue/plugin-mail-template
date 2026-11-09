@@ -38,6 +38,29 @@ test('new draft copies the active style without activating a notification', asyn
   assert.equal(calls[0][0], 'draft');
 });
 
+test('standalone creation accepts arbitrary JSON and never activates an existing reason', async () => {
+  const { api, calls } = setup();
+  const draft = await api.createStandaloneTemplate(' Order mail ');
+  assert.equal(draft.data.mode, 'standalone');
+  assert.equal(draft.data.reasonType, undefined);
+  assert.equal(draft.data.enabled, 'false');
+  assert.equal(JSON.parse(draft.data.sampleParameters).order.number, '20261109001');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'draft');
+});
+
+test('standalone save preserves version and parameter documentation', async () => {
+  const { api, calls } = setup();
+  const draft = await api.saveStandaloneTemplate({ metadata: { name: 'draft' } }, {
+    title: 'Order', parameterDescription: 'order.id: Order ID', sampleParameters: '{"order":{"id":1}}', enabled: 'true',
+  });
+  assert.equal(draft.metadata.version, 8);
+  assert.equal(draft.data.parameterDescription, 'order.id: Order ID');
+  assert.equal(draft.data.mode, 'standalone');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'save');
+});
+
 test('saving a draft preserves its source and uses the latest resource version', async () => {
   const { api, calls } = setup();
   const saved = await api.saveCustomTemplate({ metadata: { name: 'draft' } }, 'New subject', '<p>New</p>');
